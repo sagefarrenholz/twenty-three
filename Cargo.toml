@@ -1,0 +1,21 @@
+[package]
+name = "twenty-three"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+
+[dependencies]
+wasm-bindgen = "0.2.93"
+web-sys = { version = "0.3.70", features = ["console"] }
+
+[target."cfg(debug_assertions)".dependencies]
+console_error_panic_hook = "0.1.7"
+
+[dev-dependencies]
+futures = "0.3.30"
+js-sys = "0.3.70"
+wasm-bindgen-futures = "0.4.43"
+wasm-bindgen-test = "0.3.43"

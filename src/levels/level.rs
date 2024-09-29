@@ -1,6 +1,9 @@
 use crate::{
     foundation::{Entity, EntityPhysicalProperties, Position},
-    physics::collisions::{BoundingBox, CollisionParameters},
+    physics::{
+        collisions::{BoundingBox, CollisionParameters},
+        vec2::Vec2,
+    },
 };
 
 #[derive(Debug)]
@@ -18,10 +21,9 @@ impl Default for Level {
     fn default() -> Self {
         let player = Entity::Player {
             health: 100,
-            physical_properties: EntityPhysicalProperties::new(
-                Position { x: 0, y: 0 },
-                CollisionParameters::Enabled(BoundingBox::Square { w: 5, h: 5 }),
-            ),
+            physical_properties: EntityPhysicalProperties::new(CollisionParameters::Enabled(
+                BoundingBox::Square { w: 1., h: 1. },
+            )),
         };
         Self {
             entities: vec![player],

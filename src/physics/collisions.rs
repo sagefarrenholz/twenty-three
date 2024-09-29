@@ -1,10 +1,12 @@
 use crate::foundation::Position;
 
+use super::vec2::Vec2;
+
 // w & h used to determine bounding box
 // x, y is top left of box
 #[derive(Debug)]
 pub enum BoundingBox {
-    Square { w: i32, h: i32 },
+    Square { w: f32, h: f32 },
 }
 
 // Enabled (this object will experience collision physics)
@@ -17,12 +19,14 @@ pub enum CollisionParameters {
     Passthrough,
 }
 
-// If true the two entities
+// If true the two entities colliding
+// returns the new position for a to resolve the collision
 pub fn collision_test(
     a_col: &CollisionParameters,
     a_pos: &Position,
     b_col: &CollisionParameters,
     b_pos: &Position,
-) -> bool {
-    false
+    iteration: usize, // In the rare case,
+) -> Option<Vec2> {
+    Some(Vec2::new((0., 0.)))
 }

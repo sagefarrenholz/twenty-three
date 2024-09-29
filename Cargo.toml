@@ -16,7 +16,10 @@ web-sys = { version = "0.3.70", features = [
     "CanvasRenderingContext2d",
     "Window",
     "Document",
+    "Event",
     "EventTarget",
+    "KeyboardEvent",
+    "HtmlTextAreaElement",
 ] }
 
 [target."cfg(debug_assertions)".dependencies]

@@ -1,3 +1,4 @@
+use super::physics::vec2::Vec2;
 use crate::physics::collisions::CollisionParameters;
 
 #[derive(Debug)]
@@ -8,15 +9,27 @@ pub struct Position {
 
 #[derive(Debug)]
 pub struct EntityPhysicalProperties {
-    position: Position,
-    collision_parameter: CollisionParameters,
+    pub mass: f32,
+    pub position: Vec2,
+    pub collision_parameter: CollisionParameters,
+    pub force_vectors: Vec<Vec2>, // Force vectors to apply on next physics time step
+    pub acceleration_vector: Vec2, // Constant acceleration to apply
+    pub apply_gravity: bool,
+    pub velocity: Vec2,
+    pub max_velocity: Vec2, // -1 = uncapped
 }
 
 impl EntityPhysicalProperties {
-    pub fn new(position: Position, collision_parameter: CollisionParameters) -> Self {
+    pub fn new(collision_parameter: CollisionParameters) -> Self {
         Self {
-            position,
+            position: Default::default(),
             collision_parameter,
+            apply_gravity: true,
+            mass: 80f32, // kg
+            velocity: Default::default(),
+            force_vectors: Vec::new(),
+            acceleration_vector: Vec2::default(),
+            max_velocity: Vec2::new((15., -1.)),
         }
     }
 }
@@ -33,6 +46,26 @@ pub enum Entity {
     },
     Enemy {
         health: i32,
+        attack: i32, // Damage dealt when player touches enemy
         physical_properties: EntityPhysicalProperties,
     },
+}
+
+impl Entity {
+    pub fn physical_properties(&mut self) -> &mut EntityPhysicalProperties {
+        match self {
+            Entity::Player {
+                physical_properties,
+                ..
+            } => physical_properties,
+            Entity::Enemy {
+                physical_properties,
+                ..
+            } => physical_properties,
+            Entity::Block {
+                physical_properties,
+                ..
+            } => physical_properties,
+        }
+    }
 }

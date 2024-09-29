@@ -8,25 +8,21 @@ use crate::foundation::{Entity, EntityPhysicalProperties};
 
 // In place modifies entities using force vectors on
 pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error>> {
-    // Stage 1, apply net force vector
+    // Stage 1, calculate net force vector
     for entity in entities.iter_mut() {
         let EntityPhysicalProperties {
             force_vectors,
             mass,
             velocity,
             apply_gravity,
-            acceleration_vector,
             max_velocity,
             ..
         } = entity.physical_properties();
 
-        let mut new_velocity = velocity.clone();
         // TODO make these seperate for each component and handle y case
         if velocity.x() > max_velocity.x() {
             continue;
         }
-
-        // console::log_1(&JsValue::from_str(&format!("{:?}", velocity)));
 
         let mut net_force: Vec2 = Default::default();
         net_force.x();
@@ -35,44 +31,42 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
         for force in force_vectors.drain(..) {
             net_force += force;
         }
-        // Resolve new velocity vector
-        // Where a = dv / dt, so dv = a dt
 
-        // Drag force
-        // net_force += new_velocity.clone() * -1. * DRAG_CONSTANT;
+        // Force due to drag
+        // F_d_vec = Drag_cof *  v^2 * -norm(v_vec)
+        net_force += velocity.clone().norm() * -1. * DRAG_CONSTANT * velocity.mag().powi(2);
 
-        new_velocity += acceleration_vector * dt;
-
+        // Force due to gravity
+        // F_g = gm
         if *apply_gravity {
-            new_velocity += Vec2::new((0., -1. * GRAVITY_ACCELERATION * dt));
+            net_force += Vec2::new_y(-1. * GRAVITY_ACCELERATION) * *mass;
         }
-        // console::log_1(&JsValue::from_str(&format!(
-        //     "net 3 {:?} dt {}",
-        //     net_force, dt
-        // )));
 
+        let mut new_velocity = velocity.clone();
         new_velocity += net_force * dt * (1. / *mass);
 
+        // Max speed checks
+        // Constrains the velocity further than drag will
         if new_velocity.x().abs() > max_velocity.x() {
-            new_velocity.set_x(velocity.x());
+            new_velocity.set_x(
+                max_velocity.x()
+                    * (if new_velocity.x().is_sign_negative() {
+                        -1.
+                    } else {
+                        1.
+                    }),
+            );
         }
 
         *velocity = new_velocity;
-
-        // console::log_1(&JsValue::from_str("he"));
     }
 
-    // Stage 2, integrate
+    // Stage 2, integrate velocity
     for entity in entities.iter_mut() {
         let EntityPhysicalProperties {
             velocity, position, ..
         } = entity.physical_properties();
-        // console::log_1(&JsValue::from_str(&format!(
-        //     "{:?} {:?}",
-        //     velocity, position
-        // )));
         *position += velocity * dt;
-        // console::log_1(&JsValue::from_str(&format!("updated pos {:?}", position)));
     }
 
     // Stage 3, collision fixing
@@ -81,7 +75,7 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
     if let Some((player, entities)) = entities.split_first_mut() {
         if let Entity::Player {
             health: player_health,
-            physical_properties,
+            ..
         } = player
         {
             for non_player_entity in entities {

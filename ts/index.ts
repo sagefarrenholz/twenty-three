@@ -26,7 +26,7 @@ import("../pkg/index").then(async (wasm) => {
   canvas.height = 2048;
 
   wasm.load_handlers(document.documentElement);
-  await new Promise((resolve) => setTimeout(resolve, 1_000));
+  // await new Promise((resolve) => setTimeout(resolve, 1_000));
 
   // Initiate game loop
   let lastTime = Date.now();

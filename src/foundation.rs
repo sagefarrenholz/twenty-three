@@ -1,5 +1,5 @@
 use super::physics::vec2::Vec2;
-use crate::physics::collisions::CollisionParameters;
+use crate::{physics::collisions::CollisionParameters, v2};
 
 #[derive(Debug)]
 pub struct Position {
@@ -29,7 +29,7 @@ impl EntityPhysicalProperties {
             velocity: Default::default(),
             force_vectors: Vec::new(),
             acceleration_vector: Vec2::default(),
-            max_velocity: Vec2::new((15., -1.)),
+            max_velocity: v2!(20., -1.),
         }
     }
 }

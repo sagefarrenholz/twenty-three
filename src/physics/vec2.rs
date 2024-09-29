@@ -3,10 +3,24 @@ use std::ops;
 #[derive(Debug, Clone, Default, Copy)]
 pub struct Vec2(f32, f32);
 
+#[macro_export]
+macro_rules! v2 {
+    ($x:expr, $y:expr) => {{
+        Vec2::new(($x, $y))
+    }};
+}
 impl Vec2 {
     pub fn new<T: Into<(f32, f32)>>(val: T) -> Self {
         let (a, b) = val.into();
         Self(a, b)
+    }
+
+    pub fn new_x<T: Into<f32>>(x: T) -> Self {
+        Self(x.into(), 0.)
+    }
+
+    pub fn new_y<T: Into<f32>>(y: T) -> Self {
+        Self(0., y.into())
     }
 
     pub fn add(&mut self, Vec2(x, y): Vec2) -> &mut Self {
@@ -35,6 +49,20 @@ impl Vec2 {
 
     pub fn set_y(&mut self, y: f32) {
         self.1 = y;
+    }
+
+    pub fn mag(&self) -> f32 {
+        (self.0.powi(2) + self.1.powi(2)).sqrt()
+    }
+
+    pub fn norm(mut self) -> Self {
+        let mag = self.mag();
+        if mag != 0. {
+            self.0 /= mag;
+            self.1 /= mag;
+        }
+
+        self
     }
 }
 

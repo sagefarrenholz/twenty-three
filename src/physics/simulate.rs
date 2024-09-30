@@ -1,13 +1,18 @@
+use core::net;
 use std::error::Error;
 
+use wasm_bindgen::JsValue;
+use web_sys::console;
+
 use super::{
-    constants::{DRAG_CONSTANT, GRAVITY_ACCELERATION},
+    collisions::collision_test,
+    constants::{DRAG_CONSTANT, FRICTION_CONSTANT, GRAVITY_ACCELERATION},
     vec2::Vec2,
 };
 use crate::foundation::{Entity, EntityPhysicalProperties};
 
 // In place modifies entities using force vectors on
-pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error>> {
+pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<Option<bool>, Box<dyn Error>> {
     // Stage 1, calculate net force vector
     for entity in entities.iter_mut() {
         let EntityPhysicalProperties {
@@ -16,16 +21,18 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
             velocity,
             apply_gravity,
             max_velocity,
+            grounded,
             ..
         } = entity.physical_properties();
 
-        // TODO make these seperate for each component and handle y case
-        if velocity.x() > max_velocity.x() {
-            continue;
-        }
+        // // TODO make these seperate for each component and handle y case
+        // if velocity.x() > max_velocity.x() {
+        //     continue;
+        // }
+
+        // console::log_1(&JsValue::from_str(&format!("{}", mass)));
 
         let mut net_force: Vec2 = Default::default();
-        net_force.x();
 
         // Net applied forces
         for force in force_vectors.drain(..) {
@@ -42,6 +49,18 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
             net_force += Vec2::new_y(-1. * GRAVITY_ACCELERATION) * *mass;
         }
 
+        // Force due to friction
+        // If we're grounded and we have downward net force
+        // apply a force counter to our x direction porportion to our y force
+        if *grounded && net_force.y() < 0. {
+            if velocity.x().abs() < 0.01 {
+                // braking
+                // velocity.set_x(0.);d
+            } else {
+                net_force += Vec2::new_x(net_force.y() * FRICTION_CONSTANT * velocity.x().signum());
+            }
+            console::log_1(&JsValue::from_str(&format!("{} {:?}", grounded, net_force)));
+        }
         let mut new_velocity = velocity.clone();
         new_velocity += net_force * dt * (1. / *mass);
 
@@ -58,7 +77,8 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
             );
         }
 
-        *velocity = new_velocity;
+        // Deadzone velocity to prevent very small values
+        *velocity = new_velocity.deadzone_x(0.01);
     }
 
     // Stage 2, integrate velocity
@@ -72,30 +92,87 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
     // Stage 3, collision fixing
     let player = &mut entities[0];
     // Bottom center of player
+
     if let Some((player, entities)) = entities.split_first_mut() {
         if let Entity::Player {
             health: player_health,
+            physical_properties:
+                EntityPhysicalProperties {
+                    position: player_pos,
+                    collision_parameter: player_col,
+                    velocity: player_velociy,
+                    grounded,
+                    jumping,
+                    ..
+                },
             ..
         } = player
         {
+            *grounded = false;
             for non_player_entity in entities {
                 match non_player_entity {
                     Entity::Block {
-                        physical_properties,
-                        attack,
+                        physical_properties:
+                            EntityPhysicalProperties {
+                                collision_parameter: block_col,
+                                position: block_pos,
+                                ..
+                            },
+                        ..
                     } => {
-                        *player_health += *attack;
+                        // *player_health += *attack;
+                        if let Some(collision_offset) =
+                            collision_test(player_col, player_pos, block_col, block_pos)
+                        {
+                            // console::log_1(&JsValue::from_str(&format!(
+                            //     "player pos {:?} player col {:?} block pos {:?} block col {:?} coll {:?} grounded {}",
+                            //     player_pos, player_col, block_pos, block_col, collision_offset, grounded
+                            // )));
+                            console::log_1(&JsValue::from_str(&format!("test {:?}", grounded)));
+                            *player_pos += collision_offset;
+                            if collision_offset.x() != 0. {
+                                player_velociy.set_x(0.);
+                            } else {
+                                player_velociy.set_y(0.);
+                                *grounded = true;
+                                *jumping = false;
+                            }
+                        }
                     }
                     Entity::Enemy {
-                        physical_properties,
-                        attack,
-                        health,
+                        physical_properties:
+                            EntityPhysicalProperties {
+                                collision_parameter: block_col,
+                                position: block_pos,
+                                ..
+                            },
+                        ..
                     } => {
-                        // if collision_test(a_col, a_pos, b_col, b_pos) {
-                        //     *player_health += *attack;
-                        // }
+                        if let Some(_) =
+                            collision_test(player_col, player_pos, block_col, block_pos)
+                        {
+                            return Ok(Some(false));
+                        }
                     }
-                    _ => panic!("Found unimplemented collision type"),
+                    Entity::Goal {
+                        physical_properties:
+                            EntityPhysicalProperties {
+                                collision_parameter: block_col,
+                                position: block_pos,
+                                ..
+                            },
+                        ..
+                    } => {
+                        if let Some(_) =
+                            collision_test(player_col, player_pos, block_col, block_pos)
+                        {
+                            return Ok(Some(true));
+                        }
+                    }
+                    Entity::Player {
+                        health,
+                        physical_properties,
+                    } => todo!(),
                 }
             }
         } else {
@@ -103,5 +180,5 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<(), Box<dyn Error
         }
     }
 
-    Ok(())
+    Ok(None)
 }

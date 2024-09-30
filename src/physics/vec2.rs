@@ -1,4 +1,4 @@
-use std::ops;
+use std::ops::{self, Sub};
 
 #[derive(Debug, Clone, Default, Copy)]
 pub struct Vec2(f32, f32);
@@ -6,9 +6,10 @@ pub struct Vec2(f32, f32);
 #[macro_export]
 macro_rules! v2 {
     ($x:expr, $y:expr) => {{
-        Vec2::new(($x, $y))
+        crate::Vec2::new(($x, $y))
     }};
 }
+
 impl Vec2 {
     pub fn new<T: Into<(f32, f32)>>(val: T) -> Self {
         let (a, b) = val.into();
@@ -35,6 +36,17 @@ impl Vec2 {
         self
     }
 
+    pub fn deadzone_x(mut self, zone: f32) -> Self {
+        if self.0.abs() <= zone {
+            self.0 = 0.;
+        }
+        self
+    }
+
+    pub fn y_between(&self, bound: f32) -> bool {
+        self.1.abs() < bound
+    }
+
     pub fn x(&self) -> f32 {
         self.0
     }
@@ -55,6 +67,12 @@ impl Vec2 {
         (self.0.powi(2) + self.1.powi(2)).sqrt()
     }
 
+    pub fn abs(mut self) -> Self {
+        self.0 = self.0.abs();
+        self.1 = self.1.abs();
+        self
+    }
+
     pub fn norm(mut self) -> Self {
         let mag = self.mag();
         if mag != 0. {
@@ -69,6 +87,22 @@ impl Vec2 {
 impl From<(f32, f32)> for Vec2 {
     fn from((x, y): (f32, f32)) -> Self {
         Vec2(x, y)
+    }
+}
+
+impl ops::Add<Vec2> for Vec2 {
+    type Output = Vec2;
+
+    fn add(self, rhs: Vec2) -> Self::Output {
+        v2!(rhs.0 + self.0, self.1 + rhs.1)
+    }
+}
+
+impl ops::Sub<Vec2> for Vec2 {
+    type Output = Vec2;
+
+    fn sub(self, rhs: Vec2) -> Self::Output {
+        v2!(rhs.0 - self.0, rhs.1 - self.1)
     }
 }
 

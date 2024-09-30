@@ -26,7 +26,6 @@ import("../pkg/index").then(async (wasm) => {
   canvas.height = 2048;
 
   wasm.load_handlers(document.documentElement);
-  // await new Promise((resolve) => setTimeout(resolve, 1_000));
 
   // Initiate game loop
   let lastTime = Date.now();
@@ -34,9 +33,26 @@ import("../pkg/index").then(async (wasm) => {
 
   const render = () => {
     const now = Date.now();
-    wasm.render(canvas as HTMLCanvasElement, now - lastTime, now - startTime);
-    lastTime = now;
-    requestAnimationFrame(render);
+    const won = wasm.render(
+      canvas as HTMLCanvasElement,
+      now - lastTime,
+      now - startTime,
+    );
+    if (won) {
+      const youWonTextNode = document.createTextNode("Happy 23rd!");
+      const pNode = document.createElement("p");
+      pNode.style.color = "white";
+      pNode.style.fontSize = "50px";
+      pNode.style.fontFamily = "Arial";
+      pNode.appendChild(youWonTextNode);
+
+      canvas.parentElement.appendChild(pNode);
+
+      canvas.remove();
+    } else {
+      lastTime = now;
+      requestAnimationFrame(render);
+    }
   };
   requestAnimationFrame(render);
 });

@@ -1,52 +1,40 @@
+use wasm_bindgen::JsValue;
+use web_sys::console;
+
 use crate::{
-    foundation::{Entity, EntityPhysicalProperties, Position},
-    physics::{
-        collisions::{BoundingBox, CollisionParameters},
-        vec2::Vec2,
-    },
+    foundation::{Entity, EntityPhysicalProperties},
+    physics::collisions::{BoundingBox, CollisionParameters},
+    v2, Vec2,
 };
 
 #[derive(Debug)]
-pub struct LevelMetadata {
-    name: &'static str,
+pub struct LevelMetadata<'a> {
+    pub(crate) name: &'a str,
 }
 
-#[derive(Debug)]
-pub struct Level {
-    pub level_metadata: Option<LevelMetadata>,
+pub struct Level<'a> {
+    pub level_metadata: LevelMetadata<'a>,
     pub entities: Vec<Entity>,
-}
-
-impl Default for Level {
-    fn default() -> Self {
-        let player = Entity::Player {
-            health: 100,
-            physical_properties: EntityPhysicalProperties::new(CollisionParameters::Enabled(
-                BoundingBox::Square { w: 1., h: 1. },
-            )),
-        };
-        Self {
-            entities: vec![player],
-            level_metadata: Some(LevelMetadata { name: "TEST" }),
-        }
-    }
+    pub player_start: Vec2,
+    pub(crate) next: Option<Box<dyn Fn() -> Level<'static>>>,
 }
 
 // Levels are 64x64
 
 // Used for managing game level
-impl Level {
-    pub fn new() -> Self {
-        Level::default()
-    }
-
-    pub fn from_hash(hash: &'static str) -> Self {
-        Level::default()
-    }
-
+impl<'a> Level<'a> {
     // Inserts an entity in this level
     pub fn insert_entity(&mut self) {}
 
     // Returns a hash of the current level
     pub fn get_level_hash(&self) {}
+
+    pub fn advance(&self) -> Option<Level<'static>> {
+        (self.next.as_ref()).map(|f| f())
+    }
+
+    pub fn reset(&mut self) {
+        let player = &mut self.entities[0];
+        player.physical_properties().position = self.player_start;
+    }
 }

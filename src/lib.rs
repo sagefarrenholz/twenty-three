@@ -7,7 +7,10 @@ use std::{
 
 use foundation::{Entity, EntityPhysicalProperties};
 use handlers::load_key_handlers;
-use levels::{level::Level, levels::level_1};
+use levels::{
+    level::Level,
+    levels::{level_1, level_11, level_12, level_16, level_19, level_20},
+};
 use physics::{
     collisions::{BoundingBox, CollisionParameters},
     simulate::simulate,

@@ -15,8 +15,10 @@ pub struct EntityPhysicalProperties {
     pub collision_parameter: CollisionParameters,
     pub force_vectors: Vec<Vec2>, // Force vectors to apply on next physics time step
     pub apply_gravity: bool,
-    pub grounded: bool, //If base of this entity is colliding with another
+    pub ground_velocity: Option<Vec2>, // Additional Velocity to add
+    pub grounded: bool,                //If base of this entity is colliding with another
     pub velocity: Vec2,
+    pub start_position: Vec2,
     pub max_velocity: Vec2, // -1 = uncapped
 }
 
@@ -26,9 +28,11 @@ impl EntityPhysicalProperties {
             position,
             collision_parameter,
             apply_gravity: true,
+            start_position: position,
             mass: 70f32, // kg
             jumping: false,
             grounded: false,
+            ground_velocity: None,
             velocity: Default::default(),
             force_vectors: Vec::new(),
             max_velocity: v2!(10., -1.),
@@ -86,6 +90,8 @@ impl Entity {
                 ),
                 apply_gravity: false,
                 mass: 700., // kg
+                ground_velocity: None,
+                start_position: position,
                 jumping: false,
                 velocity: Default::default(),
                 force_vectors: Vec::new(),
@@ -104,6 +110,8 @@ impl Entity {
                     crate::physics::collisions::BoundingBox::Rect { w: 1., h: 1. },
                 ),
                 apply_gravity: false,
+                ground_velocity: None,
+                start_position: position,
                 mass: 700., // kg
                 jumping: false,
                 velocity: Default::default(),
@@ -125,6 +133,8 @@ impl Entity {
                 ),
                 apply_gravity: false,
                 mass: 700., // kg
+                ground_velocity: None,
+                start_position: position,
                 jumping: false,
                 velocity: Default::default(),
                 force_vectors: Vec::new(),
@@ -143,6 +153,8 @@ impl Entity {
                     crate::physics::collisions::BoundingBox::Rect { w: 2., h: 2. },
                 ),
                 apply_gravity: false,
+                ground_velocity: None,
+                start_position: position,
                 mass: 700., // kg
                 jumping: false,
                 velocity: Default::default(),
@@ -164,7 +176,71 @@ impl Entity {
                 apply_gravity: false,
                 mass: 700., // kg
                 jumping: false,
+                start_position: position,
+                ground_velocity: None,
                 velocity: Default::default(),
+                force_vectors: Vec::new(),
+                max_velocity: v2!(20., -1.),
+                grounded: false,
+            },
+        }
+    }
+    pub fn default_goal_moving(position: Vec2, velocity: Vec2) -> Entity {
+        Entity::Goal {
+            physical_properties: EntityPhysicalProperties {
+                position,
+                collision_parameter: CollisionParameters::Enabled(
+                    crate::physics::collisions::BoundingBox::Rect { w: 2., h: 2. },
+                ),
+                apply_gravity: false,
+                mass: 700., // kg
+                ground_velocity: None,
+                start_position: position,
+                jumping: false,
+                velocity,
+                force_vectors: Vec::new(),
+                max_velocity: v2!(20., -1.),
+                grounded: false,
+            },
+        }
+    }
+
+    pub fn default_block_moving(position: Vec2, velocity: Vec2) -> Entity {
+        Entity::Block {
+            attack: 0,
+            physical_properties: EntityPhysicalProperties {
+                position,
+                collision_parameter: CollisionParameters::Enabled(
+                    crate::physics::collisions::BoundingBox::Rect { w: 2., h: 2. },
+                ),
+                apply_gravity: false,
+                mass: 700., // kg
+                ground_velocity: None,
+                start_position: position,
+                jumping: false,
+                velocity,
+                force_vectors: Vec::new(),
+                max_velocity: v2!(20., -1.),
+                grounded: false,
+            },
+        }
+    }
+
+    pub fn default_enemy_moving(position: Vec2, velocity: Vec2) -> Entity {
+        Entity::Enemy {
+            health: 0,
+            attack: 0,
+            physical_properties: EntityPhysicalProperties {
+                position,
+                collision_parameter: CollisionParameters::Enabled(
+                    crate::physics::collisions::BoundingBox::Rect { w: 2., h: 2. },
+                ),
+                apply_gravity: false,
+                mass: 700., // kg
+                ground_velocity: None,
+                start_position: position,
+                jumping: false,
+                velocity,
                 force_vectors: Vec::new(),
                 max_velocity: v2!(20., -1.),
                 grounded: false,
@@ -182,6 +258,8 @@ impl Entity {
                 ),
                 apply_gravity: false,
                 mass: 700., // kg
+                ground_velocity: None,
+                start_position: position,
                 jumping: false,
                 velocity: Default::default(),
                 force_vectors: Vec::new(),

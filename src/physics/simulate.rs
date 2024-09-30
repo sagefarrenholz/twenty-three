@@ -86,6 +86,7 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<Option<bool>, Box
         let EntityPhysicalProperties {
             velocity, position, ..
         } = entity.physical_properties();
+
         *position += velocity * dt;
     }
 
@@ -100,8 +101,9 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<Option<bool>, Box
                 EntityPhysicalProperties {
                     position: player_pos,
                     collision_parameter: player_col,
-                    velocity: player_velociy,
                     grounded,
+                    velocity: player_velocity,
+                    ground_velocity,
                     jumping,
                     ..
                 },
@@ -116,6 +118,7 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<Option<bool>, Box
                             EntityPhysicalProperties {
                                 collision_parameter: block_col,
                                 position: block_pos,
+                                velocity: block_velocity,
                                 ..
                             },
                         ..
@@ -131,9 +134,16 @@ pub fn simulate(entities: &mut Vec<Entity>, dt: f32) -> Result<Option<bool>, Box
                             console::log_1(&JsValue::from_str(&format!("test {:?}", grounded)));
                             *player_pos += collision_offset;
                             if collision_offset.x() != 0. {
-                                player_velociy.set_x(0.);
+                                player_velocity.set_x(0.);
                             } else {
-                                player_velociy.set_y(0.);
+                                player_velocity.set_y(0.);
+                                // Move with block
+                                if block_velocity.x().abs() > player_velocity.x().abs() - 1. {
+                                    player_velocity.set_x(block_velocity.x());
+                                }
+                                if block_velocity.y().abs() > player_velocity.y().abs() - 1. {
+                                    player_velocity.set_y(block_velocity.y());
+                                }
                                 *grounded = true;
                                 *jumping = false;
                             }

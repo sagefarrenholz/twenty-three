@@ -34,7 +34,10 @@ impl<'a> Level<'a> {
     }
 
     pub fn reset(&mut self) {
-        let player = &mut self.entities[0];
-        player.physical_properties().position = self.player_start;
+        let entities = &mut self.entities;
+        for entity in entities {
+            let phys = entity.physical_properties();
+            phys.position = phys.start_position;
+        }
     }
 }

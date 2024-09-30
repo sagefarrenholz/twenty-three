@@ -484,7 +484,7 @@ pub fn level_12() -> Level<'static> {
     Level {
         level_metadata: LevelMetadata { name: "LEVEL 12" },
         entities: special,
-        next: Some(Box::new(level_12)),
+        next: Some(Box::new(level_13)),
         player_start,
     }
 }
